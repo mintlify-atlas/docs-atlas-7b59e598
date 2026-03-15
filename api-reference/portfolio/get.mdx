@@ -1,0 +1,97 @@
+---
+title: Get portfolio
+description: Retrieve the authenticated user's portfolio contracts and aggregate metrics.
+---
+
+<Note>
+Requires `Authorization: Bearer <token>` header. The portfolio is scoped to the user identified by the token — no user ID parameter is needed.
+</Note>
+
+## Request
+
+**`GET /api/portfolio`**
+
+This endpoint takes no parameters.
+
+## Response
+
+<ResponseField name="contracts" type="object[]" required>
+  Array of `EnergyContract` objects in the user's portfolio.
+  <Expandable title="EnergyContract properties">
+    <ResponseField name="id" type="string" required>UUID of the contract.</ResponseField>
+    <ResponseField name="energy_type" type="string" required>Energy source type.</ResponseField>
+    <ResponseField name="quantity_mwh" type="float" required>Total quantity in megawatt-hours.</ResponseField>
+    <ResponseField name="price_per_mwh" type="float" required>Price per megawatt-hour.</ResponseField>
+    <ResponseField name="delivery_start" type="string" required>Delivery start date (`YYYY-MM-DD`).</ResponseField>
+    <ResponseField name="delivery_end" type="string" required>Delivery end date (`YYYY-MM-DD`).</ResponseField>
+    <ResponseField name="location" type="string" required>Geographic location.</ResponseField>
+    <ResponseField name="status" type="string" required>`Available` or `Sold`.</ResponseField>
+    <ResponseField name="provider" type="string">Energy provider name.</ResponseField>
+    <ResponseField name="description" type="string">Contract description.</ResponseField>
+    <ResponseField name="carbon_intensity" type="float">Carbon intensity value.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="metrics" type="object" required>
+  Aggregate statistics across all contracts in the portfolio.
+  <Expandable title="metrics properties">
+    <ResponseField name="total_contracts" type="integer" required>Number of contracts in the portfolio.</ResponseField>
+    <ResponseField name="total_capacity_mwh" type="float" required>Sum of `quantity_mwh` across all contracts.</ResponseField>
+    <ResponseField name="total_cost" type="float" required>Sum of `quantity_mwh * price_per_mwh` across all contracts.</ResponseField>
+    <ResponseField name="average_price_per_mwh" type="float" required>Weighted average price per MWh (`total_cost / total_capacity_mwh`). Returns `0` if portfolio is empty.</ResponseField>
+    <ResponseField name="breakdown_by_type" type="object" required>Total MWh per energy type. Keys are energy type names, values are the summed `quantity_mwh`.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example
+
+```bash cURL
+curl --request GET \
+  --url http://localhost:8000/api/portfolio \
+  --header 'Authorization: Bearer <token>'
+```
+
+### Example response
+
+```json
+{
+  "contracts": [
+    {
+      "id": "c1d2e3f4-0000-1111-2222-333344445555",
+      "energy_type": "Solar",
+      "quantity_mwh": 500.0,
+      "price_per_mwh": 45.0,
+      "delivery_start": "2026-06-01",
+      "delivery_end": "2026-08-31",
+      "location": "Austin, Texas",
+      "status": "Available",
+      "provider": "SunPower Co.",
+      "description": "Summer solar batch",
+      "carbon_intensity": 0.05
+    },
+    {
+      "id": "c2d3e4f5-aaaa-bbbb-cccc-ddddeeee0000",
+      "energy_type": "Wind",
+      "quantity_mwh": 1200.0,
+      "price_per_mwh": 38.5,
+      "delivery_start": "2026-03-01",
+      "delivery_end": "2026-05-31",
+      "location": "Lubbock, Texas",
+      "status": "Available",
+      "provider": "WindForce Ltd.",
+      "description": null,
+      "carbon_intensity": 0.02
+    }
+  ],
+  "metrics": {
+    "total_contracts": 2,
+    "total_capacity_mwh": 1700.0,
+    "total_cost": 68700.0,
+    "average_price_per_mwh": 40.41,
+    "breakdown_by_type": {
+      "Solar": 500.0,
+      "Wind": 1200.0
+    }
+  }
+}
+```

@@ -1,0 +1,188 @@
+---
+title: Frontend Architecture
+description: Deep-dive into the React client—component structure, Zustand state management, theming, and data fetching.
+---
+
+## Tech Stack
+
+<CardGroup cols={3}>
+  <Card title="React 19" icon="react">
+    Root framework. Concurrent-mode features available; hooks-only component model.
+  </Card>
+  <Card title="Vite 7" icon="bolt">
+    Dev server with instant HMR and Rollup-based production builds. Output lands in `client/dist/`.
+  </Card>
+  <Card title="Tailwind CSS v4" icon="paintbrush">
+    Utility-first styling. Dark mode toggled via the `dark` class on `<html>` with `dark:` variants.
+  </Card>
+  <Card title="Zustand 5" icon="database">
+    Lightweight global store with the `persist` middleware for `localStorage` hydration.
+  </Card>
+  <Card title="Recharts 3" icon="chart-line">
+    Composable SVG charts used in the PriceTrends view.
+  </Card>
+  <Card title="Lucide React" icon="shapes">
+    Tree-shakeable SVG icon library used throughout the UI.
+  </Card>
+</CardGroup>
+
+## Component Structure
+
+`App.jsx` is the root component. It owns top-level local state (selected contract, active view, fetched data) and passes handlers down as props.
+
+```
+App
+├── Login              – Email/password form, shown when user is null
+├── Sidebar            – Navigation, theme toggle, logout button
+├── Marketplace        – Contract listing with filters and sorting
+├── Portfolio          – User's saved contracts + metrics summary
+├── PriceTrends        – Recharts area/line charts for price history
+├── ContractModal      – Detail overlay for a single contract
+└── ComparisonModal    – Side-by-side comparison of up to 3 contracts
+```
+
+Route switching is handled by a `view` state variable (`"marketplace"` | `"portfolio"` | `"trends"`) — there is no React Router involved. The `Sidebar` updates `view`; `App` conditionally renders the matching panel.
+
+```jsx
+// App.jsx – view switching
+{view === "marketplace" ? (
+  <Marketplace ... />
+) : view === "portfolio" ? (
+  <Portfolio ... />
+) : (
+  <PriceTrends trends={trends} energyOptions={energyOptions} />
+)}
+```
+
+## State Management with Zustand
+
+All shared state lives in a single Zustand store defined in `src/store.js`. The store is wrapped with the `persist` middleware, which serialises the entire store to `localStorage` under the key `"energy-storage"`.
+
+### Store Shape
+
+| Field | Type | Description |
+|---|---|---|
+| `energyOptions` | `string[]` | Master list of energy types (Solar, Wind, Nuclear, …) |
+| `selectedEnergyTypes` | `string[]` | Active energy-type filter; passed as query params to `/api/contracts` |
+| `minPrice` | `number` | Lower bound of the price filter (default `0`) |
+| `maxPrice` | `number` | Upper bound of the price filter (default `100`) |
+| `location` | `string` | Location filter string |
+| `sortBy` | `string` | Sort field, default `"delivery_start"` |
+| `sortOrder` | `string` | `"asc"` or `"desc"` |
+| `comparisonList` | `object[]` | Up to 3 contracts queued for side-by-side comparison |
+| `theme` | `"light"\|"dark"` | Current color scheme |
+| `user` | `object\|null` | Authenticated Supabase user object |
+| `token` | `string\|null` | Supabase JWT access token |
+
+### Store Definition
+
+```js
+// src/store.js
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+export const useEnergyStore = create(
+  persist(
+    (set) => ({
+      energyOptions: ["Solar", "Wind", "Nuclear", "Hydro",
+                      "Geothermal", "Natural Gas", "Coal", "Oil"],
+      selectedEnergyTypes: [],
+      minPrice: 0,
+      maxPrice: 100,
+      location: "",
+      sortBy: "delivery_start",
+      sortOrder: "asc",
+      comparisonList: [],
+      theme: "light",
+      user: null,
+      token: null,
+
+      // Actions
+      toggleTheme: () => set((state) => ({
+        theme: state.theme === "light" ? "dark" : "light",
+      })),
+      setUser: (user) => set({ user }),
+      setToken: (token) => set({ token }),
+      logout: () => set({ user: null, token: null }),
+      toggleEnergyType: (type) => set((state) => ({ ... })),
+      toggleComparison: (contract) => set((state) => ({ ... })),
+      clearComparison: () => set({ comparisonList: [] }),
+      resetFilters: () => set({ selectedEnergyTypes: [], minPrice: 0,
+                                maxPrice: 100, location: "",
+                                sortBy: "delivery_start", sortOrder: "asc" }),
+    }),
+    { name: "energy-storage" },
+  ),
+);
+```
+
+### Auth State Persistence
+
+Because `persist` serialises the whole store, `user` and `token` survive page reloads automatically. When the page loads, Zustand rehydrates from `localStorage["energy-storage"]`. If a valid token is present, `App` skips the `Login` screen and goes straight to data fetching.
+
+<Note>
+  The token is stored in `localStorage`, not an HTTP-only cookie, which is a trade-off for simplicity. Tokens are still validated server-side on every request via Supabase's `get_user` call.
+</Note>
+
+## Dark / Light Theme
+
+Theme toggling works by adding or removing the `dark` class on `document.documentElement`. A `useEffect` in `App.jsx` reacts to the `theme` value in the store:
+
+```jsx
+// App.jsx
+useEffect(() => {
+  if (theme === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+}, [theme]);
+```
+
+Tailwind's `dark:` variants then handle all per-component color overrides. The `Sidebar` exposes a toggle button that calls `toggleTheme()` from the store.
+
+## Data Fetching
+
+All API calls are made with the native `fetch` API — there is no dedicated HTTP client library. Every request attaches the Bearer token from the Zustand store:
+
+```jsx
+fetch(`/api/contracts?${params.toString()}`, {
+  headers: { Authorization: `Bearer ${token}` },
+})
+```
+
+A shared `handleResponse` helper checks for `401` responses and triggers automatic logout:
+
+```jsx
+const handleResponse = (res) => {
+  if (res.status === 401) {
+    logout();
+    return null;
+  }
+  return res.json();
+};
+```
+
+### Reactive Fetching
+
+`useEffect` hooks re-fetch data whenever filter state changes, keeping the UI in sync without any manual cache invalidation:
+
+```jsx
+useEffect(() => {
+  if (user) fetchContracts();
+}, [user, token, filters, selectedEnergyTypes,
+    minPrice, maxPrice, location, sortBy, sortOrder]);
+```
+
+### Contract Filter Query Params
+
+All active filters are serialised as URL query parameters before sending to `/api/contracts`:
+
+| Param | Source |
+|---|---|
+| `energy_types` | `selectedEnergyTypes[]` (multi-value) |
+| `min_price` / `max_price` | `minPrice` / `maxPrice` store fields |
+| `location` | `location` store field |
+| `sort_by` / `sort_order` | `sortBy` / `sortOrder` store fields |
+| `min_quantity` / `max_quantity` | Local `filters` component state |
+| `start_date` / `end_date` | Local `filters` component state |

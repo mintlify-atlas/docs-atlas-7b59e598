@@ -1,0 +1,66 @@
+---
+title: Sell contract
+description: Mark an energy contract as sold, updating its status to "Sold".
+---
+
+<Note>
+Requires `Authorization: Bearer <token>` header.
+</Note>
+
+## Request
+
+**`POST /api/contracts/{contract_id}/sell`**
+
+### Path parameters
+
+<ParamField path="contract_id" type="string" required>
+  UUID of the contract to mark as sold.
+</ParamField>
+
+## Response
+
+Returns the updated `EnergyContract` object with `status` set to `"Sold"`.
+
+<ResponseField name="id" type="string" required>UUID of the contract.</ResponseField>
+<ResponseField name="energy_type" type="string" required>Energy source type.</ResponseField>
+<ResponseField name="quantity_mwh" type="float" required>Total quantity in megawatt-hours.</ResponseField>
+<ResponseField name="price_per_mwh" type="float" required>Price per megawatt-hour.</ResponseField>
+<ResponseField name="delivery_start" type="string" required>Delivery start date (`YYYY-MM-DD`).</ResponseField>
+<ResponseField name="delivery_end" type="string" required>Delivery end date (`YYYY-MM-DD`).</ResponseField>
+<ResponseField name="location" type="string" required>Geographic location.</ResponseField>
+<ResponseField name="status" type="string" required>Always `"Sold"` after this operation.</ResponseField>
+<ResponseField name="provider" type="string">Energy provider name.</ResponseField>
+<ResponseField name="description" type="string">Contract description.</ResponseField>
+<ResponseField name="carbon_intensity" type="float">Carbon intensity value.</ResponseField>
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `404`  | No contract found with the given ID. |
+
+## Example
+
+```bash cURL
+curl --request POST \
+  --url http://localhost:8000/api/contracts/d4e5f6a7-1111-2222-3333-444455556666/sell \
+  --header 'Authorization: Bearer <token>'
+```
+
+### Example response
+
+```json
+{
+  "id": "d4e5f6a7-1111-2222-3333-444455556666",
+  "energy_type": "Solar",
+  "quantity_mwh": 800.0,
+  "price_per_mwh": 55.0,
+  "delivery_start": "2026-07-01",
+  "delivery_end": "2026-09-30",
+  "location": "Phoenix, Arizona",
+  "status": "Sold",
+  "provider": "Desert Sun Energy",
+  "description": "Updated Q3 solar allocation",
+  "carbon_intensity": 0.04
+}
+```

@@ -1,0 +1,122 @@
+---
+title: Database Setup
+description: Create your Supabase project, run the schema SQL, and seed the database with sample energy contracts.
+---
+
+The Energy Contracts Dashboard uses **Supabase** as its PostgreSQL backend. You need to create two tables — `contracts` and `portfolio` — before the application can run. Follow the steps below in order.
+
+<Steps>
+  <Step title="Create a Supabase project">
+    1. Log in to your [Supabase dashboard](https://supabase.com/dashboard).
+    2. Click **New project**.
+    3. Choose an organization, enter a project name (e.g. `energy-contracts`), set a strong database password, and select a region close to your users.
+    4. Wait for the project to finish provisioning — this typically takes about a minute.
+
+    <Tip>
+      Keep your database password in a secure location. You will not need it for normal API access, but it is required if you ever connect directly via a PostgreSQL client.
+    </Tip>
+  </Step>
+
+  <Step title="Open the SQL Editor">
+    In the left sidebar of your Supabase project, navigate to **SQL Editor**. This is where you will run the schema creation script.
+  </Step>
+
+  <Step title="Create the contracts and portfolio tables">
+    Paste the following SQL into the editor and click **Run**:
+
+    ```sql
+    -- Create Contracts Table
+    CREATE TABLE IF NOT EXISTS contracts (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        energy_type TEXT NOT NULL,
+        quantity_mwh NUMERIC NOT NULL,
+        price_per_mwh NUMERIC NOT NULL,
+        delivery_start DATE NOT NULL,
+        delivery_end DATE NOT NULL,
+        location TEXT NOT NULL,
+        status TEXT DEFAULT 'Available',
+        provider TEXT,
+        description TEXT,
+        carbon_intensity NUMERIC,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    -- Create Portfolio Table
+    CREATE TABLE IF NOT EXISTS portfolio (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        contract_id UUID NOT NULL REFERENCES contracts(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, contract_id)
+    );
+    ```
+
+    The editor should report `Success. No rows returned` when both statements execute cleanly.
+
+    <Note>
+      The `portfolio` table has a foreign key on `contracts(id)` with `ON DELETE CASCADE`, so removing a contract automatically cleans up any associated portfolio entries.
+    </Note>
+  </Step>
+
+  <Step title="Configure environment variables">
+    The seed script connects to Supabase using the same environment variables as the server. Before running it, make sure `server/.env` exists and contains your project credentials.
+
+    If you have not done this yet, follow the [Environment Variables](/setup/environment) guide first, then return here.
+  </Step>
+
+  <Step title="Run the seed script">
+    From the `server` directory, run:
+
+    ```bash
+    cd server
+    python3 seed.py
+    ```
+
+    The script inserts 17 sample energy contracts covering Solar, Wind, Natural Gas, Nuclear, Hydro, Coal, Geothermal, and Oil across various US locations. It also verifies that the `portfolio` table exists.
+
+    Expected output on a fresh database:
+
+    ```
+    --- Energy Marketplace Seeding Utility ---
+    [INFO] Table 'contracts' is empty. Beginning seed...
+    [SUCCESS] Successfully seeded 17 contracts.
+    [OK] Table 'portfolio' exists.
+    ```
+
+    If you see a `[SKIP]` message instead, the `contracts` table already contains data — no action is needed.
+
+    <Warning>
+      If the script prints `[!] ERROR: Required tables are missing.`, it means the SQL in Step 3 was not run or did not complete successfully. Return to the SQL Editor, re-run the schema script, and then retry the seed command.
+    </Warning>
+  </Step>
+</Steps>
+
+## Table reference
+
+### contracts
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `UUID` | Primary key, auto-generated |
+| `energy_type` | `TEXT` | e.g. `Solar`, `Wind`, `Nuclear` |
+| `quantity_mwh` | `NUMERIC` | Contract volume in megawatt-hours |
+| `price_per_mwh` | `NUMERIC` | Price per MWh |
+| `delivery_start` | `DATE` | Start of the delivery window |
+| `delivery_end` | `DATE` | End of the delivery window |
+| `location` | `TEXT` | US state or region |
+| `status` | `TEXT` | `Available`, `Reserved`, or `Sold` |
+| `provider` | `TEXT` | Optional supplier name |
+| `description` | `TEXT` | Optional contract description |
+| `carbon_intensity` | `NUMERIC` | Optional gCO₂/kWh value |
+| `created_at` | `TIMESTAMPTZ` | Auto-set to current timestamp |
+
+### portfolio
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `UUID` | Primary key, auto-generated |
+| `user_id` | `UUID` | References the authenticated user |
+| `contract_id` | `UUID` | Foreign key → `contracts(id)` |
+| `created_at` | `TIMESTAMPTZ` | Auto-set to current timestamp |
+
+Once seeding is complete, you're ready to [start the server and client](/quickstart).

@@ -1,0 +1,135 @@
+---
+title: Contract Marketplace
+description: Browse, filter, and reserve available energy contracts from the marketplace.
+---
+
+The Contract Marketplace is the primary view for discovering and reserving energy contracts. It displays all available contracts in a two-column card grid alongside a persistent filter panel.
+
+## Layout
+
+The page uses a four-column layout: the leftmost column contains the Filters panel, and the remaining three columns display the contract card grid. A sort control and an "Available" contract count appear in the top-right header area.
+
+## Filtering Contracts
+
+The **Filters** panel on the left lets you narrow results across five dimensions. All filters apply immediately — the contract list re-fetches from the API whenever any filter value changes.
+
+### Energy Type
+
+Eight energy type toggle buttons are available:
+
+<CardGroup cols={4}>
+  <Card title="Solar" />
+  <Card title="Wind" />
+  <Card title="Nuclear" />
+  <Card title="Hydro" />
+  <Card title="Geothermal" />
+  <Card title="Natural Gas" />
+  <Card title="Coal" />
+  <Card title="Oil" />
+</CardGroup>
+
+Click any button to activate it (highlighted in blue). Click again to deactivate. Multiple energy types can be selected simultaneously — the filter returns contracts matching any of the selected types.
+
+### Price Range
+
+Two numeric inputs — **Min Price** and **Max Price** — accept values in $/MWh. The default range is $0–$100/MWh.
+
+### Location
+
+A text input filters contracts by delivery location. The field accepts partial text (e.g. `Texas`) and sends it as a `location` query parameter to the API.
+
+### Quantity Range
+
+Min and max quantity fields (in MWh) are available via the `filters` state (`min_quantity`, `max_quantity`). These are reset alongside the other filters when **Reset** is clicked.
+
+### Date Range
+
+Start and end date inputs (`start_date`, `end_date`) filter contracts by their delivery period. These are also part of the `filters` state managed alongside the quantity fields.
+
+### Resetting Filters
+
+Click the **Reset** link at the top of the Filters panel to restore all filter values to their defaults:
+
+- Energy types: none selected
+- Min price: 0, Max price: 100
+- Location: empty
+- Min/max quantity: empty
+- Start/end date: empty
+- Sort: `delivery_start` ascending
+
+## Sorting
+
+The sort control appears in the top-right header. Use the dropdown to choose a sort field:
+
+| Option | Sort Field |
+|--------|------------|
+| Date | `delivery_start` |
+| Price | `price_per_mwh` |
+| Quantity | `quantity_mwh` |
+
+Click the **ASC / DESC** toggle button next to the dropdown to flip the sort direction.
+
+## Contract Cards
+
+Each contract is displayed as a card showing:
+
+- **Energy type** and **location**
+- **Status badge** — green for `Available`, red for any other status
+- **Quantity** in MWh
+- **Price** in $/MWh
+- A **Details** button and an **Add** button
+
+### Viewing Contract Details
+
+Click the **Details** button (Info icon) on any card to open the Contract Detail modal. The modal shows:
+
+- Energy type and current status
+- Provider information
+- Delivery location
+- Carbon intensity (kg CO2/MWh)
+- Delivery period (start and end dates)
+- Pricing structure (fixed price per MWh)
+- Total capacity (MWh)
+- Contract description
+
+A **Reserve Contract Now** button at the bottom of the modal adds the contract to your portfolio and closes the modal. The button is disabled if the contract is not `Available` or if it is already in your portfolio.
+
+### Adding a Contract to Your Portfolio
+
+<Steps>
+  <Step title="Locate the contract card">
+    Browse or filter the marketplace to find the contract you want.
+  </Step>
+  <Step title="Click Add">
+    Click the **Add** button on the contract card. The button label changes to **Added** once the contract is in your portfolio.
+  </Step>
+  <Step title="Confirm in Portfolio">
+    Navigate to **My Portfolio** in the sidebar to verify the contract appears there.
+  </Step>
+</Steps>
+
+<Note>
+  The **Add** button is disabled when the contract status is not `Available` or when the contract is already in your portfolio.
+</Note>
+
+## Comparing Contracts
+
+You can select up to 3 contracts for side-by-side comparison.
+
+<Steps>
+  <Step title="Click the compare icon">
+    Click the **Scale** icon button in the top-right corner of any contract card. The icon turns into a blue checkmark when the contract is selected for comparison.
+  </Step>
+  <Step title="Select additional contracts">
+    Repeat for one or two more contracts. The comparison toolbar appears at the bottom of the screen showing the selected contracts' initials.
+  </Step>
+  <Step title="Open the comparison modal">
+    Click **Compare N Selected** in the floating toolbar. This button is disabled until at least 2 contracts are selected. The comparison modal opens showing the contracts side by side.
+  </Step>
+</Steps>
+
+<Warning>
+  A maximum of 3 contracts can be added to the comparison list at once. Selecting a fourth contract has no effect.
+</Warning>
+
+The floating comparison toolbar is only visible when at least one contract has been selected for comparison.

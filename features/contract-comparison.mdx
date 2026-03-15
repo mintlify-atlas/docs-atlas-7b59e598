@@ -1,0 +1,69 @@
+---
+title: Contract Comparison
+description: Select up to three contracts in the marketplace and compare them side by side in a modal.
+---
+
+The contract comparison feature lets you evaluate up to three contracts simultaneously before deciding which to add to your portfolio.
+
+## Selecting Contracts for Comparison
+
+Contracts are selected from the **Contract Marketplace** view.
+
+<Steps>
+  <Step title="Click the Scale icon on a contract card">
+    Each marketplace card has a **Scale** icon button in its top-right corner. Click it to add that contract to the comparison list. The icon changes to a blue **Check** to confirm selection.
+  </Step>
+  <Step title="Select one or two more contracts">
+    Repeat for additional contracts. A floating toolbar appears at the bottom center of the screen, showing an avatar for each selected contract and a **Compare N Selected** button.
+  </Step>
+  <Step title="Open the comparison modal">
+    Click **Compare N Selected** in the floating toolbar. The button is disabled until at least 2 contracts are selected. Clicking it opens the Contract Comparison modal.
+  </Step>
+</Steps>
+
+<Warning>
+  The comparison list is capped at **3 contracts**. Attempting to add a fourth contract has no effect — the `toggleComparison` action returns the existing state unchanged when the list is already at 3.
+</Warning>
+
+## The Comparison Modal
+
+The modal displays the selected contracts in a responsive grid (up to 3 columns). Each contract column shows the following fields:
+
+| Field | Details |
+|-------|---------|
+| **Energy Type** | Shown as a badge above the location name |
+| **Location** | Primary heading of the card |
+| **Contract ID** | First 8 characters of the UUID |
+| **Price** | $/MWh — the lowest price across compared contracts is highlighted in green |
+| **Quantity** | MWh — the highest quantity across compared contracts is highlighted in blue |
+| **Delivery Start** | Date the delivery period begins |
+| **Delivery End** | Date the delivery period ends |
+| **Location** | Repeated in a dedicated location field below duration |
+
+### Value Highlights
+
+The comparison modal automatically highlights the best values:
+
+- **Lowest price** across all compared contracts is shown in **green bold** text.
+- **Highest quantity** across all compared contracts is shown in **blue bold** text.
+
+These highlights help you identify the most cost-effective and highest-capacity option at a glance.
+
+## Adding a Contract from the Modal
+
+Each contract column has a **Reserve** button at the bottom. Click it to add that contract to your portfolio without closing the modal.
+
+<Note>
+  The **Reserve** button is disabled and labeled **Added** if the contract is already in your portfolio, or disabled entirely if the contract status is not `Available`.
+</Note>
+
+## Clearing the Comparison List
+
+Two ways to clear the comparison:
+
+- **Clear All** — click the red **Clear All** text link in the modal header. This calls `clearComparison()`, empties the list, and the floating toolbar disappears from the marketplace.
+- **Close the modal** — clicking the **X** button closes the modal without clearing the list. The comparison list persists in the Zustand store (backed by `localStorage`) so you can reopen it.
+
+<Tip>
+  The comparison list is persisted to `localStorage` via Zustand's `persist` middleware (storage key: `energy-storage`). Your selected contracts survive a page refresh.
+</Tip>

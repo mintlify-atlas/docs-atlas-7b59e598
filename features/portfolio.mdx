@@ -1,0 +1,77 @@
+---
+title: Portfolio Management
+description: View metrics, manage contracts, and export your energy contract portfolio.
+---
+
+The **My Portfolio** view provides a real-time overview of all contracts you have reserved, along with aggregate metrics and an energy type breakdown chart.
+
+## Empty State
+
+If you have not yet added any contracts, the portfolio displays an empty state with a prompt to visit the marketplace. Click **View Marketplace** to navigate directly to the Contract Marketplace.
+
+## Portfolio Metrics
+
+When your portfolio contains at least one contract, four metric cards appear at the top of the page:
+
+| Metric | Description |
+|--------|-------------|
+| **Total Capacity** | Sum of all contract quantities in MWh |
+| **Total Cost** | Sum of `quantity_mwh × price_per_mwh` across all contracts, in USD |
+| **Avg Price** | Weighted average price per MWh across all contracts |
+| **Contracts** | Total number of contracts in the portfolio |
+
+## Contract List
+
+Below the metrics, all reserved contracts are listed. Each row displays:
+
+- An energy type initial avatar (blue)
+- **Energy type** name
+- **Location** and **quantity** (MWh)
+- **Total cost** for the contract and **price per MWh**
+- Action buttons on the right
+
+### Removing a Contract
+
+Click the **Trash** icon on any contract row to remove it from your portfolio. This sends a `DELETE /api/portfolio/{contractId}` request and refreshes the portfolio immediately.
+
+### Marking a Contract as Sold
+
+Click the **CheckCircle** icon on any contract row that has not already been marked as sold. This calls `POST /api/contracts/{contractId}/sell`, which sets the contract status to `Sold`. Once sold:
+
+- The CheckCircle action button no longer appears for that contract.
+- The contract status is updated in the marketplace listing as well.
+
+<Note>
+  Marking a contract as Sold is irreversible from the UI. The action also refreshes both the portfolio and the marketplace contract list.
+</Note>
+
+## Energy Type Breakdown Chart
+
+To the right of the contract list, a donut chart (powered by Recharts `PieChart`) visualizes the distribution of contracts by energy type. Each slice represents an energy type present in your portfolio.
+
+The chart uses up to six colors cycling through:
+`#0088FE`, `#00C49F`, `#FFBB28`, `#FF8042`, `#8884d8`, `#82ca9d`
+
+A tooltip appears on hover showing the energy type name and its value. A legend below the chart labels each slice.
+
+<Info>
+  The breakdown data comes from `portfolio.metrics.breakdown_by_type`, which is a server-computed map of energy type to contract count or capacity.
+</Info>
+
+## Exporting to CSV
+
+When the portfolio is non-empty, an **Export CSV** button (green, with a Download icon) appears in the page header.
+
+Clicking it generates and downloads a CSV file named `portfolio-contract-MM-DD-YYYY.csv` containing the following columns:
+
+| Column | Value |
+|--------|-------|
+| ID | Contract UUID |
+| Energy Type | e.g. `Solar` |
+| Location | Delivery location |
+| Quantity (MWh) | Numeric quantity |
+| Price per MWh | Price in USD |
+| Total Cost | `quantity_mwh × price_per_mwh` |
+| Status | `Active` or `Sold` |
+
+The file is generated entirely in the browser — no server request is made for the export.

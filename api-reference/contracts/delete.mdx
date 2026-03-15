@@ -1,0 +1,40 @@
+---
+title: Delete contract
+description: Permanently delete an energy contract by its UUID.
+---
+
+<Note>
+Requires `Authorization: Bearer <token>` header.
+</Note>
+
+## Request
+
+**`DELETE /api/contracts/{contract_id}`**
+
+### Path parameters
+
+<ParamField path="contract_id" type="string" required>
+  UUID of the contract to delete.
+</ParamField>
+
+## Response
+
+<ResponseField name="message" type="string" required>
+  Confirmation message. Always returns `"Contract deleted"`.
+</ResponseField>
+
+## Example
+
+```bash cURL
+curl --request DELETE \
+  --url http://localhost:8000/api/contracts/d4e5f6a7-1111-2222-3333-444455556666 \
+  --header 'Authorization: Bearer <token>'
+```
+
+### Example response
+
+```json
+{
+  "message": "Contract deleted"
+}
+```

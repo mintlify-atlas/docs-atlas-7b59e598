@@ -1,0 +1,104 @@
+---
+title: Architecture Overview
+description: High-level overview of the Energy Contracts Dashboard monorepo structure, data flow, and technology choices.
+---
+
+The Energy Contracts Dashboard is a full-stack web application built as a monorepo with two top-level directories: `client/` (React SPA) and `server/` (FastAPI backend). The backend serves both the REST API and the compiled frontend from a single process.
+
+## Monorepo Structure
+
+```
+energy-contracts-dashboard/
+├── client/                  # React + Vite frontend
+│   ├── src/
+│   │   ├── App.jsx          # Root component & data-fetching logic
+│   │   ├── store.js         # Zustand global state
+│   │   └── components/      # Login, Sidebar, Marketplace, Portfolio, …
+│   ├── dist/                # Vite production build output (generated)
+│   └── package.json
+└── server/                  # FastAPI backend
+    ├── main.py              # App entry point, CORS, SPA catch-all
+    ├── auth.py              # JWT dependency (get_current_user)
+    ├── database.py          # Supabase client factory
+    ├── models.py            # Pydantic request/response models
+    ├── routers/
+    │   ├── contracts.py     # /api/contracts routes
+    │   └── portfolio.py     # /api/portfolio routes
+    └── requirements.txt
+```
+
+## How the Frontend and Backend Connect
+
+FastAPI serves the React SPA directly from the `client/dist/` build output. After running `npm run build` in the `client/` directory, the compiled assets are available at `client/dist/`. The server resolves this path relative to `main.py` at startup:
+
+```python
+client_dist_path = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "..", "client", "dist"
+)
+```
+
+A catch-all route handles every non-API path. Real static assets (`.js`, `.css`, `.svg`, etc.) are served as files; all other paths fall back to `index.html` so that React Router can handle client-side navigation:
+
+```python
+@app.get("/{path:path}")
+async def serve_spa(path: str):
+    file_path = os.path.join(client_dist_path, path)
+    if path != "" and os.path.isfile(file_path):
+        return FileResponse(file_path)
+    index_path = os.path.join(client_dist_path, "index.html")
+    if os.path.isfile(index_path):
+        return FileResponse(index_path)
+    return {"error": "Frontend build not found. Run 'npm run build' in the client directory."}
+```
+
+## Data Flow
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Browser                                                │
+│  React SPA (Zustand state, fetch API)                   │
+└───────────────────┬─────────────────────────────────────┘
+                    │  HTTP  Authorization: Bearer <token>
+                    ▼
+┌─────────────────────────────────────────────────────────┐
+│  FastAPI  (uvicorn, port 8000)                          │
+│  • /api/login      – issues Supabase JWT                │
+│  • /api/contracts  – marketplace data                   │
+│  • /api/portfolio  – per-user portfolio                 │
+│  • /{path}         – serves React SPA                   │
+└───────────────────┬─────────────────────────────────────┘
+                    │  supabase-py  (REST + Auth API)
+                    ▼
+┌─────────────────────────────────────────────────────────┐
+│  Supabase (PostgreSQL + Auth)                           │
+│  • contracts table                                      │
+│  • portfolio_items table                                │
+│  • Auth service (JWT issuance & verification)           │
+└─────────────────────────────────────────────────────────┘
+```
+
+1. The React app calls `/api/login` with user credentials.
+2. FastAPI delegates to Supabase Auth, which returns a signed JWT.
+3. The token is stored in Zustand (persisted to `localStorage`).
+4. Every subsequent API call attaches the token as an `Authorization: Bearer` header.
+5. FastAPI verifies each token with Supabase before executing the request.
+6. Query results flow back to React, where Zustand and local component state drive the UI.
+
+## Technology Choices
+
+| Layer | Technology | Rationale |
+|---|---|---|
+| Frontend framework | React 19 + Vite 7 | Fast HMR in development; optimized production bundles via Rollup |
+| Styling | Tailwind CSS v4 | Utility-first CSS with zero-config dark-mode via `dark:` variants |
+| State management | Zustand 5 | Minimal boilerplate; built-in `persist` middleware for localStorage sync |
+| Charts | Recharts 3 | Composable SVG charts designed for React |
+| Icons | Lucide React | Consistent, tree-shakeable icon set |
+| Backend framework | FastAPI 0.135 | Automatic OpenAPI docs; async-ready; integrates cleanly with Pydantic |
+| Data validation | Pydantic 2 | Declarative request/response schemas with automatic coercion |
+| Database & Auth | Supabase | Managed Postgres + row-level security + JWT-based Auth in one service |
+| Server runtime | uvicorn 0.41 | ASGI server; pairs directly with FastAPI |
+
+<Note>
+  Before running the server in production, build the React app first with `npm run build` inside `client/`. The FastAPI process serves the compiled assets—there is no separate static file server.
+</Note>

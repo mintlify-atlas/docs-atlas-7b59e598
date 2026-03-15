@@ -1,0 +1,124 @@
+---
+title: Prerequisites
+description: Everything you need to install before setting up the Energy Contracts Dashboard.
+---
+
+Before you begin, make sure you have the following tools and accounts in place. The dashboard runs a **React + Vite** frontend and a **FastAPI** backend, connected to a **Supabase** PostgreSQL database.
+
+<CardGroup cols={2}>
+  <Card title="Node.js v18+" icon="node-js">
+    Required to install and run the React frontend. Used by `npm install` and `npm run dev`.
+  </Card>
+  <Card title="Python 3.11+" icon="python">
+    Required to run the FastAPI backend server and the database seeding script.
+  </Card>
+  <Card title="Supabase Account" icon="database">
+    Provides the hosted PostgreSQL database and user authentication used by both the server and client.
+  </Card>
+  <Card title="Git" icon="code-branch">
+    Required to clone the repository and manage version control.
+  </Card>
+</CardGroup>
+
+## Node.js v18+
+
+The client is built with React 19 and Vite 7. Node.js v18 or higher is required.
+
+<CodeGroup>
+
+```bash macOS (Homebrew)
+brew install node
+```
+
+```bash Windows (winget)
+winget install OpenJS.NodeJS
+```
+
+```bash Linux (apt)
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+</CodeGroup>
+
+Verify the installation:
+
+```bash
+node --version   # should print v18.x.x or higher
+npm --version
+```
+
+## Python 3.11+
+
+The server uses FastAPI, Pydantic v2, and the Supabase Python client — all of which require Python 3.11 or higher.
+
+<CodeGroup>
+
+```bash macOS (Homebrew)
+brew install python@3.11
+```
+
+```bash Windows (winget)
+winget install Python.Python.3.11
+```
+
+```bash Linux (apt)
+sudo apt-get install python3.11 python3.11-venv python3-pip
+```
+
+</CodeGroup>
+
+Verify the installation:
+
+```bash
+python3 --version   # should print Python 3.11.x or higher
+pip3 --version
+```
+
+## Supabase Account
+
+Supabase provides the PostgreSQL database and authentication backend for the dashboard. You will need a free account to create a project and obtain the credentials used in the server's environment variables.
+
+1. Go to [https://supabase.com](https://supabase.com) and sign up for a free account.
+2. Once logged in, create a new project (covered in the [Database Setup](/setup/database) guide).
+
+<Tip>
+  The free Supabase tier is sufficient for running the dashboard locally and in small deployments.
+</Tip>
+
+## Git
+
+Git is used to clone the project repository.
+
+<CodeGroup>
+
+```bash macOS (Homebrew)
+brew install git
+```
+
+```bash Windows (winget)
+winget install Git.Git
+```
+
+```bash Linux (apt)
+sudo apt-get install git
+```
+
+</CodeGroup>
+
+Verify the installation:
+
+```bash
+git --version
+```
+
+## Clone the repository
+
+Once all prerequisites are in place, clone the project:
+
+```bash
+git clone <repository-url>
+cd energy-contract-dashboard
+```
+
+Then continue with [Database Setup](/setup/database) to create the required Supabase tables.

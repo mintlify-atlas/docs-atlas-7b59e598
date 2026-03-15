@@ -1,0 +1,63 @@
+---
+title: Price Trends
+description: Analyze monthly average energy contract prices over time, broken down by energy type.
+---
+
+The **Price Trends** view provides a historical line chart of average contract prices per energy type, helping you identify seasonal patterns and optimal times to reserve contracts.
+
+## The Chart
+
+A full-width line chart (Recharts `LineChart`, 500px tall) plots **monthly average price in $/MWh** on the Y-axis against **month** on the X-axis. Data is fetched from `GET /api/contracts/trends` and consists of monthly aggregates computed server-side across all contracts.
+
+Each data point on the X-axis represents a calendar month. Hovering over the chart displays a tooltip with the price for each energy type at that month.
+
+### Energy Types Displayed
+
+A separate line is rendered for each of the eight energy types defined in the application:
+
+| Energy Type | Line Color |
+|-------------|------------|
+| Solar | `#0088FE` |
+| Wind | `#00C49F` |
+| Nuclear | `#FFBB28` |
+| Hydro | `#FF8042` |
+| Geothermal | `#8884d8` |
+| Natural Gas | `#82ca9d` |
+| Coal | `#ff7300` |
+| Oil | `#387908` |
+
+Lines use `strokeWidth: 3` with circular data point dots (`r: 4`) and a larger active dot on hover (`r: 6`). Gaps in data (months with no contracts for a given energy type) are bridged using `connectNulls`.
+
+### Toggling Energy Types
+
+The Recharts `Legend` component is rendered below the chart with `iconType="circle"`. Clicking a legend item toggles the visibility of that energy type's line, allowing you to focus on specific types.
+
+<Tip>
+  Use the legend toggles to compare a subset of energy types — for example, show only Solar and Wind to contrast renewable volatility against a baseload source like Nuclear.
+</Tip>
+
+## Data Aggregation
+
+The trends data is a flat array of objects, each representing one month. Each object has a `month` key (used as the X-axis) and one key per energy type (used as data values for each line). For example:
+
+```json
+[
+  { "month": "2024-01", "Solar": 42.5, "Wind": 38.1, "Nuclear": 55.0 },
+  { "month": "2024-02", "Solar": 45.0, "Wind": 39.4, "Nuclear": 55.0 }
+]
+```
+
+Averages are computed from all contracts whose `delivery_start` falls within that month.
+
+## Market Insights
+
+Two callout cards appear below the chart:
+
+<CardGroup cols={2}>
+  <Card title="Market Insight">
+    Renewable energy prices show seasonal variation based on delivery start dates. Solar and Wind tend to be more volatile compared to baseload sources like Nuclear or Geothermal.
+  </Card>
+  <Card title="Trading Tip">
+    Locking in long-term contracts during price dips can significantly reduce your portfolio's weighted average cost. Monitor these trends to identify optimal entry points.
+  </Card>
+</CardGroup>

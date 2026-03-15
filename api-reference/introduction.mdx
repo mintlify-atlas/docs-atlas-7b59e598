@@ -1,33 +1,65 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: API Reference
+description: Overview of the Energy Contracts Dashboard REST API, base URL, authentication, and available endpoints.
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+The Energy Contracts Dashboard API is a REST API served at `http://localhost:8000`. It provides endpoints for managing energy contracts and user portfolios.
 
-## Welcome
+## Base URL
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
-
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+```
+http://localhost:8000
+```
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All endpoints except `POST /api/login` require a Bearer token in the `Authorization` header.
+
+```http
+Authorization: Bearer <token>
+```
+
+<Note>
+Obtain a token by calling `POST /api/login` with your email and password. The token is a Supabase JWT and remains valid for the duration of the session.
+</Note>
+
+### Getting a token
+
+```bash
+curl --request POST \
+  --url http://localhost:8000/api/login \
+  --header 'Content-Type: application/json' \
+  --data '{"email": "you@example.com", "password": "yourpassword"}'
+```
+
+The response includes an `access_token` you can use in subsequent requests:
 
 ```json
-"security": [
-  {
-    "bearerAuth": []
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "email": "you@example.com"
   }
-]
+}
 ```
+
+## Interactive docs
+
+The API exposes a Swagger UI at [http://localhost:8000/docs](http://localhost:8000/docs) where you can explore and test all endpoints directly in the browser.
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/login` | Authenticate and obtain a Bearer token |
+| `GET` | `/api/contracts` | List contracts with optional filtering and sorting |
+| `POST` | `/api/contracts` | Create a new energy contract |
+| `GET` | `/api/contracts/trends` | Get average price trends by energy type per month |
+| `GET` | `/api/contracts/{contract_id}` | Get a single contract by ID |
+| `PUT` | `/api/contracts/{contract_id}` | Update an existing contract |
+| `DELETE` | `/api/contracts/{contract_id}` | Delete a contract |
+| `POST` | `/api/contracts/{contract_id}/sell` | Mark a contract as sold |
+| `GET` | `/api/portfolio` | Get the authenticated user's portfolio and metrics |
+| `POST` | `/api/portfolio/{contract_id}` | Add a contract to the user's portfolio |
+| `DELETE` | `/api/portfolio/{contract_id}` | Remove a contract from the user's portfolio |

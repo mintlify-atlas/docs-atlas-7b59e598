@@ -1,0 +1,63 @@
+---
+title: Price trends
+description: Get average price per MWh grouped by energy type and calendar month.
+---
+
+<Note>
+Requires `Authorization: Bearer <token>` header.
+</Note>
+
+## Request
+
+**`GET /api/contracts/trends`**
+
+This endpoint takes no query parameters. It aggregates all contracts in the database, computing the average `price_per_mwh` for each energy type within each calendar month (derived from `delivery_start`).
+
+## Response
+
+Returns an array of objects, one per month, sorted chronologically. Each object contains a `month` key and one key per energy type that has data for that month.
+
+<ResponseField name="[]" type="object[]">
+  <Expandable title="Trend entry properties">
+    <ResponseField name="month" type="string" required>
+      The calendar month in `YYYY-MM` format.
+    </ResponseField>
+    <ResponseField name="[energy_type]" type="float">
+      Average price per MWh for that energy type in this month. The key is the energy type name (e.g. `Solar`, `Wind`). Only energy types with contracts in the month are included.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example
+
+```bash cURL
+curl --request GET \
+  --url http://localhost:8000/api/contracts/trends \
+  --header 'Authorization: Bearer <token>'
+```
+
+### Example response
+
+```json
+[
+  {
+    "month": "2026-01",
+    "Solar": 47.5,
+    "Wind": 35.0,
+    "Nuclear": 62.0
+  },
+  {
+    "month": "2026-02",
+    "Solar": 49.0,
+    "Wind": 36.5,
+    "Hydro": 28.0
+  },
+  {
+    "month": "2026-03",
+    "Solar": 51.2,
+    "Wind": 34.8,
+    "Geothermal": 40.0,
+    "Natural Gas": 55.0
+  }
+]
+```

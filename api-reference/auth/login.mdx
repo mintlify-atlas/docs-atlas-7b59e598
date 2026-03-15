@@ -1,0 +1,83 @@
+---
+title: Login
+description: Authenticate with email and password to receive a Bearer token for all other API requests.
+---
+
+<Note>
+This is the only endpoint that does **not** require an `Authorization` header.
+</Note>
+
+## Request
+
+**`POST /api/login`**
+
+### Body
+
+<ParamField body="email" type="string" required>
+  The user's email address.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  The user's password.
+</ParamField>
+
+## Response
+
+<ResponseField name="access_token" type="string" required>
+  JWT Bearer token to include in the `Authorization` header of subsequent requests.
+</ResponseField>
+
+<ResponseField name="user" type="object" required>
+  <Expandable title="properties">
+    <ResponseField name="id" type="string" required>
+      The user's unique identifier (UUID).
+    </ResponseField>
+    <ResponseField name="email" type="string" required>
+      The user's email address.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `400`  | Invalid credentials. The `detail` field contains the error message. |
+
+## Examples
+
+<CodeGroup>
+
+```bash cURL
+curl --request POST \
+  --url http://localhost:8000/api/login \
+  --header 'Content-Type: application/json' \
+  --data '{"email": "you@example.com", "password": "yourpassword"}'
+```
+
+```javascript JavaScript
+const response = await fetch('http://localhost:8000/api/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: 'you@example.com',
+    password: 'yourpassword'
+  })
+});
+
+const { access_token, user } = await response.json();
+```
+
+</CodeGroup>
+
+### Example response
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "email": "you@example.com"
+  }
+}
+```

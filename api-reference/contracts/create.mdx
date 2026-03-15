@@ -1,0 +1,109 @@
+---
+title: Create contract
+description: Create a new energy contract.
+---
+
+<Note>
+Requires `Authorization: Bearer <token>` header.
+</Note>
+
+## Request
+
+**`POST /api/contracts`**
+
+### Body
+
+<ParamField body="energy_type" type="string" required>
+  Energy source type. Accepted values: `Solar`, `Wind`, `Nuclear`, `Hydro`, `Geothermal`, `Natural Gas`, `Coal`, `Oil`.
+</ParamField>
+
+<ParamField body="quantity_mwh" type="float" required>
+  Total quantity of energy in megawatt-hours.
+</ParamField>
+
+<ParamField body="price_per_mwh" type="float" required>
+  Price per megawatt-hour.
+</ParamField>
+
+<ParamField body="delivery_start" type="string" required>
+  Delivery start date in `YYYY-MM-DD` format.
+</ParamField>
+
+<ParamField body="delivery_end" type="string" required>
+  Delivery end date in `YYYY-MM-DD` format.
+</ParamField>
+
+<ParamField body="location" type="string" required>
+  Geographic location associated with the contract.
+</ParamField>
+
+<ParamField body="status" type="string" default="Available">
+  Contract status. Accepted values: `Available`, `Sold`.
+</ParamField>
+
+<ParamField body="provider" type="string">
+  Name of the energy provider (optional).
+</ParamField>
+
+<ParamField body="description" type="string">
+  Free-text description of the contract (optional).
+</ParamField>
+
+<ParamField body="carbon_intensity" type="float">
+  Carbon intensity of the energy source (optional).
+</ParamField>
+
+## Response
+
+Returns the created `EnergyContract` object with a server-generated `id`.
+
+<ResponseField name="id" type="string" required>UUID assigned to the new contract.</ResponseField>
+<ResponseField name="energy_type" type="string" required>Energy source type.</ResponseField>
+<ResponseField name="quantity_mwh" type="float" required>Total quantity in megawatt-hours.</ResponseField>
+<ResponseField name="price_per_mwh" type="float" required>Price per megawatt-hour.</ResponseField>
+<ResponseField name="delivery_start" type="string" required>Delivery start date (`YYYY-MM-DD`).</ResponseField>
+<ResponseField name="delivery_end" type="string" required>Delivery end date (`YYYY-MM-DD`).</ResponseField>
+<ResponseField name="location" type="string" required>Geographic location.</ResponseField>
+<ResponseField name="status" type="string" required>Contract status.</ResponseField>
+<ResponseField name="provider" type="string">Energy provider name.</ResponseField>
+<ResponseField name="description" type="string">Contract description.</ResponseField>
+<ResponseField name="carbon_intensity" type="float">Carbon intensity value.</ResponseField>
+
+## Example
+
+```bash cURL
+curl --request POST \
+  --url http://localhost:8000/api/contracts \
+  --header 'Authorization: Bearer <token>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "energy_type": "Solar",
+    "quantity_mwh": 750.0,
+    "price_per_mwh": 52.0,
+    "delivery_start": "2026-07-01",
+    "delivery_end": "2026-09-30",
+    "location": "Phoenix, Arizona",
+    "status": "Available",
+    "provider": "Desert Sun Energy",
+    "description": "Q3 solar allocation",
+    "carbon_intensity": 0.04
+  }'
+```
+
+### Example response
+
+```json
+{
+  "id": "d4e5f6a7-1111-2222-3333-444455556666",
+  "energy_type": "Solar",
+  "quantity_mwh": 750.0,
+  "price_per_mwh": 52.0,
+  "delivery_start": "2026-07-01",
+  "delivery_end": "2026-09-30",
+  "location": "Phoenix, Arizona",
+  "status": "Available",
+  "provider": "Desert Sun Energy",
+  "description": "Q3 solar allocation",
+  "carbon_intensity": 0.04
+}
+```

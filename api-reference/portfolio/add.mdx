@@ -1,0 +1,48 @@
+---
+title: Add to portfolio
+description: Add an energy contract to the authenticated user's portfolio.
+---
+
+<Note>
+Requires `Authorization: Bearer <token>` header. The portfolio is scoped to the authenticated user.
+</Note>
+
+## Request
+
+**`POST /api/portfolio/{contract_id}`**
+
+### Path parameters
+
+<ParamField path="contract_id" type="string" required>
+  UUID of the contract to add to the portfolio.
+</ParamField>
+
+## Response
+
+<ResponseField name="message" type="string" required>
+  `"Added to portfolio"` if the contract was successfully added, or `"Already in portfolio"` if the contract was already present.
+</ResponseField>
+
+## Example
+
+```bash cURL
+curl --request POST \
+  --url http://localhost:8000/api/portfolio/c1d2e3f4-0000-1111-2222-333344445555 \
+  --header 'Authorization: Bearer <token>'
+```
+
+### Example response (added)
+
+```json
+{
+  "message": "Added to portfolio"
+}
+```
+
+### Example response (duplicate)
+
+```json
+{
+  "message": "Already in portfolio"
+}
+```

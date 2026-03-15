@@ -1,0 +1,93 @@
+---
+title: Environment Variables
+description: Configure the server's .env file with your Supabase project URL and API key.
+---
+
+The FastAPI server requires two environment variables to connect to your Supabase project. These are loaded at startup from a `.env` file located in the `server/` directory.
+
+## Create the .env file
+
+<Steps>
+  <Step title="Copy the example file">
+    The repository includes a `.env.example` template. Copy it to create your own `.env`:
+
+    ```bash
+    cp server/.env.example server/.env
+    ```
+  </Step>
+
+  <Step title="Open the file and fill in your values">
+    Your `server/.env` file should look like this:
+
+    ```env server/.env
+    SUPABASE_URL=your_supabase_url_here
+    SUPABASE_KEY=your_supabase_anon_key_here
+    ```
+
+    Replace the placeholder values with the real credentials from your Supabase project (see the next step).
+  </Step>
+
+  <Step title="Retrieve your credentials from the Supabase dashboard">
+    1. Open your project in the [Supabase dashboard](https://supabase.com/dashboard).
+    2. In the left sidebar, go to **Project Settings** → **API**.
+    3. Copy the following two values:
+
+    | Variable | Where to find it |
+    |---|---|
+    | `SUPABASE_URL` | **Project URL** field at the top of the API settings page |
+    | `SUPABASE_KEY` | **`anon` `public`** key under *Project API Keys* |
+
+    Paste each value into `server/.env`.
+
+    <Note>
+      Use the `anon` key, not the `service_role` key. The `anon` key respects Row Level Security (RLS) policies. The `service_role` key bypasses all security rules and should never be used in application code.
+    </Note>
+  </Step>
+</Steps>
+
+## Variable reference
+
+### `SUPABASE_URL`
+
+The base URL of your Supabase project's REST API. It takes the form:
+
+```
+https://<project-ref>.supabase.co
+```
+
+This value is used by the `supabase-py` client in `database.py` to route all API requests to the correct project.
+
+### `SUPABASE_KEY`
+
+The `anon` (anonymous) public API key for your Supabase project. It is a long JWT string that authenticates the server's requests against your database.
+
+This key is safe to use server-side. It is **not** the same as the `service_role` key and does not grant unrestricted database access.
+
+## How the server loads these variables
+
+The server uses `python-dotenv` to load `server/.env` automatically at startup. In `database.py`:
+
+```python server/database.py
+import os
+from dotenv import load_dotenv
+from supabase import create_client, Client
+
+load_dotenv()
+
+def get_supabase() -> Client:
+    url: str = os.environ.get("SUPABASE_URL", "")
+    key: str = os.environ.get("SUPABASE_KEY", "")
+    return create_client(url, key)
+```
+
+`load_dotenv()` reads the `.env` file and populates `os.environ` before any route handler or database call is made.
+
+<Warning>
+  Never commit `server/.env` to version control. It contains credentials that grant access to your database. The repository's `.gitignore` should already exclude `.env` files — double-check before pushing.
+</Warning>
+
+<Tip>
+  If you are deploying to a hosted environment (e.g. Railway, Render, Fly.io), set `SUPABASE_URL` and `SUPABASE_KEY` as environment variables in the platform's dashboard instead of using a `.env` file.
+</Tip>
+
+With your `.env` configured, return to [Database Setup](/setup/database) to run the seed script, or proceed to start the server.

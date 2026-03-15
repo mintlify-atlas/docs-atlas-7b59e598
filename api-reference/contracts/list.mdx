@@ -1,0 +1,107 @@
+---
+title: List contracts
+description: Retrieve a filtered and sorted list of energy contracts.
+---
+
+<Note>
+Requires `Authorization: Bearer <token>` header.
+</Note>
+
+## Request
+
+**`GET /api/contracts`**
+
+### Query parameters
+
+All parameters are optional.
+
+<ParamField query="energy_types" type="string[]">
+  Filter by one or more energy types. Repeat the parameter for multiple values.
+  Accepted values: `Solar`, `Wind`, `Nuclear`, `Hydro`, `Geothermal`, `Natural Gas`, `Coal`, `Oil`.
+
+  Example: `?energy_types=Solar&energy_types=Wind`
+</ParamField>
+
+<ParamField query="min_price" type="float">
+  Minimum price per MWh (inclusive).
+</ParamField>
+
+<ParamField query="max_price" type="float">
+  Maximum price per MWh (inclusive).
+</ParamField>
+
+<ParamField query="min_quantity" type="float">
+  Minimum quantity in MWh (inclusive).
+</ParamField>
+
+<ParamField query="max_quantity" type="float">
+  Maximum quantity in MWh (inclusive).
+</ParamField>
+
+<ParamField query="location" type="string">
+  Partial case-insensitive match against the contract's location field.
+</ParamField>
+
+<ParamField query="start_date" type="string">
+  Filter contracts whose delivery start is on or after this date. Format: `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField query="end_date" type="string">
+  Filter contracts whose delivery end is on or before this date. Format: `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField query="sort_by" type="string" default="delivery_start">
+  Field name to sort by.
+</ParamField>
+
+<ParamField query="sort_order" type="string" default="asc">
+  Sort direction. Accepted values: `asc`, `desc`.
+</ParamField>
+
+## Response
+
+Returns an array of `EnergyContract` objects.
+
+<ResponseField name="[]" type="object[]">
+  <Expandable title="EnergyContract properties">
+    <ResponseField name="id" type="string" required>UUID of the contract.</ResponseField>
+    <ResponseField name="energy_type" type="string" required>Energy source type (e.g. `Solar`, `Wind`).</ResponseField>
+    <ResponseField name="quantity_mwh" type="float" required>Total quantity in megawatt-hours.</ResponseField>
+    <ResponseField name="price_per_mwh" type="float" required>Price per megawatt-hour.</ResponseField>
+    <ResponseField name="delivery_start" type="string" required>Delivery start date (`YYYY-MM-DD`).</ResponseField>
+    <ResponseField name="delivery_end" type="string" required>Delivery end date (`YYYY-MM-DD`).</ResponseField>
+    <ResponseField name="location" type="string" required>Geographic location of the contract.</ResponseField>
+    <ResponseField name="status" type="string" required>`Available` or `Sold`.</ResponseField>
+    <ResponseField name="provider" type="string">Energy provider name, if specified.</ResponseField>
+    <ResponseField name="description" type="string">Optional description.</ResponseField>
+    <ResponseField name="carbon_intensity" type="float">Carbon intensity value, if specified.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example
+
+```bash cURL
+curl --request GET \
+  --url 'http://localhost:8000/api/contracts?energy_types=Solar&energy_types=Wind&min_price=40&max_price=100&location=Texas&sort_by=price_per_mwh&sort_order=asc' \
+  --header 'Authorization: Bearer <token>'
+```
+
+### Example response
+
+```json
+[
+  {
+    "id": "c1d2e3f4-0000-1111-2222-333344445555",
+    "energy_type": "Solar",
+    "quantity_mwh": 500.0,
+    "price_per_mwh": 45.0,
+    "delivery_start": "2026-06-01",
+    "delivery_end": "2026-08-31",
+    "location": "Austin, Texas",
+    "status": "Available",
+    "provider": "SunPower Co.",
+    "description": "Summer solar batch",
+    "carbon_intensity": 0.05
+  }
+]
+```

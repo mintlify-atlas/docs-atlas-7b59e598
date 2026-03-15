@@ -1,0 +1,66 @@
+---
+title: Get contract
+description: Retrieve a single energy contract by its UUID.
+---
+
+<Note>
+Requires `Authorization: Bearer <token>` header.
+</Note>
+
+## Request
+
+**`GET /api/contracts/{contract_id}`**
+
+### Path parameters
+
+<ParamField path="contract_id" type="string" required>
+  UUID of the contract to retrieve.
+</ParamField>
+
+## Response
+
+Returns a single `EnergyContract` object.
+
+<ResponseField name="id" type="string" required>UUID of the contract.</ResponseField>
+<ResponseField name="energy_type" type="string" required>Energy source type (e.g. `Solar`, `Wind`).</ResponseField>
+<ResponseField name="quantity_mwh" type="float" required>Total quantity in megawatt-hours.</ResponseField>
+<ResponseField name="price_per_mwh" type="float" required>Price per megawatt-hour.</ResponseField>
+<ResponseField name="delivery_start" type="string" required>Delivery start date (`YYYY-MM-DD`).</ResponseField>
+<ResponseField name="delivery_end" type="string" required>Delivery end date (`YYYY-MM-DD`).</ResponseField>
+<ResponseField name="location" type="string" required>Geographic location of the contract.</ResponseField>
+<ResponseField name="status" type="string" required>`Available` or `Sold`.</ResponseField>
+<ResponseField name="provider" type="string">Energy provider name, if specified.</ResponseField>
+<ResponseField name="description" type="string">Optional description.</ResponseField>
+<ResponseField name="carbon_intensity" type="float">Carbon intensity value, if specified.</ResponseField>
+
+### Error responses
+
+| Status | Description |
+|--------|-------------|
+| `404`  | No contract found with the given ID. |
+
+## Example
+
+```bash cURL
+curl --request GET \
+  --url http://localhost:8000/api/contracts/c1d2e3f4-0000-1111-2222-333344445555 \
+  --header 'Authorization: Bearer <token>'
+```
+
+### Example response
+
+```json
+{
+  "id": "c1d2e3f4-0000-1111-2222-333344445555",
+  "energy_type": "Wind",
+  "quantity_mwh": 1200.0,
+  "price_per_mwh": 38.5,
+  "delivery_start": "2026-03-01",
+  "delivery_end": "2026-05-31",
+  "location": "Lubbock, Texas",
+  "status": "Available",
+  "provider": "WindForce Ltd.",
+  "description": null,
+  "carbon_intensity": 0.02
+}
+```

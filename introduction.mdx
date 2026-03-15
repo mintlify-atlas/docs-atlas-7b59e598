@@ -1,0 +1,75 @@
+---
+title: Introduction
+description: A full-stack energy trading platform for browsing, managing, and analyzing energy contracts.
+---
+
+# Energy Contracts Dashboard
+
+The Energy Contracts Dashboard is a full-stack web application that enables energy traders to browse a marketplace of energy contracts, build and manage a personal portfolio, and analyze price trends across energy types — all from a single, unified interface.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get your local environment running in minutes
+  </Card>
+  <Card title="Marketplace" icon="store" href="/features/marketplace">
+    Browse and filter energy contracts
+  </Card>
+  <Card title="Portfolio" icon="briefcase" href="/features/portfolio">
+    Track and manage your contract holdings
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/introduction">
+    Explore the full REST API
+  </Card>
+</CardGroup>
+
+## What is the Energy Contracts Dashboard?
+
+The platform connects energy buyers and sellers through a structured contract marketplace. Each contract represents a commitment to deliver a specific quantity of energy (measured in MWh) at a set price, from a defined location, over a delivery window.
+
+Users can:
+
+- **Browse contracts** filtered by energy type, price range, quantity, location, and delivery dates
+- **Compare contracts** side-by-side (up to 3 at once) to make informed decisions
+- **Build a portfolio** by adding contracts and tracking aggregate metrics
+- **Sell contracts** to mark them as fulfilled and remove them from the active market
+- **Analyze trends** with interactive charts showing average prices per energy type over time
+
+## Technology stack
+
+<CardGroup cols={2}>
+  <Card title="React + Vite" icon="react">
+    Fast frontend with hot module replacement and Tailwind CSS styling
+  </Card>
+  <Card title="FastAPI" icon="bolt">
+    High-performance Python backend with automatic OpenAPI documentation
+  </Card>
+  <Card title="Supabase" icon="database">
+    PostgreSQL database and authentication via Supabase BaaS
+  </Card>
+  <Card title="Zustand" icon="layers">
+    Lightweight state management with persistent local storage
+  </Card>
+</CardGroup>
+
+## Energy types supported
+
+The platform supports contracts across eight energy categories:
+
+| Energy Type  | Description |
+|---|---|
+| **Solar**       | Photovoltaic and concentrated solar generation |
+| **Wind**        | Onshore and offshore wind generation |
+| **Nuclear**     | Baseload nuclear power generation |
+| **Hydro**       | Hydroelectric power generation |
+| **Geothermal**  | Geothermal heat and power generation |
+| **Natural Gas** | Natural gas combustion generation |
+| **Coal**        | Coal-fired thermal generation |
+| **Oil**         | Oil-fired generation |
+
+## Key concepts
+
+**Contract** — The core data unit. Each contract has an energy type, quantity (MWh), price per MWh, delivery window (start and end dates), location, provider, and status (`Available` or `Sold`).
+
+**Portfolio** — A user's personal collection of contracts. The portfolio view aggregates metrics like total capacity (MWh), total cost, and average price per MWh, with a breakdown by energy type.
+
+**Price Trends** — Aggregated monthly average prices per energy type, visualized as line charts for market analysis.

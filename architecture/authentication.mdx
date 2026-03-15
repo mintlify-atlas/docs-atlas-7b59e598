@@ -1,0 +1,191 @@
+---
+title: Authentication
+description: How Supabase Auth, JWT tokens, and the FastAPI get_current_user dependency secure the Energy Contracts Dashboard.
+---
+
+Authentication is powered by **Supabase Auth**. Supabase issues signed JWTs on login; FastAPI verifies every protected request against those tokens by calling back into Supabase.
+
+## Login Flow
+
+<Steps>
+  <Step title="User submits credentials">
+    The `Login` component calls the `login` handler in `App.jsx`, which POSTs to `/api/login` with `email` and `password`:
+
+    ```jsx
+    // App.jsx
+    const login = async (e) => {
+      e.preventDefault();
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || "Login failed");
+
+      setUser(data.user);
+      setToken(data.access_token);
+    };
+    ```
+  </Step>
+
+  <Step title="FastAPI delegates to Supabase Auth">
+    The `/api/login` endpoint accepts a `LoginRequest` body and calls `supabase.auth.sign_in_with_password`:
+
+    ```python
+    # server/main.py
+    @app.post("/api/login")
+    def handle_login(request: LoginRequest):
+        supabase = get_supabase()
+        try:
+            response = supabase.auth.sign_in_with_password(
+                {"email": request.email, "password": request.password}
+            )
+            return {
+                "access_token": response.session.access_token,
+                "user": {
+                    "id": response.user.id,
+                    "email": response.user.email,
+                },
+            }
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+    ```
+  </Step>
+
+  <Step title="Token and user stored in Zustand">
+    On a successful response, `setUser(data.user)` and `setToken(data.access_token)` update the Zustand store. Because the store uses the `persist` middleware, both values are immediately written to `localStorage` under the key `"energy-storage"`:
+
+    ```js
+    // src/store.js (relevant actions)
+    setUser: (user) => set({ user }),
+    setToken: (token) => set({ token }),
+    ```
+
+    With `user` now non-null, `App` unmounts `Login` and renders the main application shell.
+  </Step>
+</Steps>
+
+## Passing Tokens on Every Request
+
+Every API call includes the token as an `Authorization: Bearer` header:
+
+```jsx
+fetch("/api/portfolio", {
+  headers: { Authorization: `Bearer ${token}` },
+})
+```
+
+This pattern is consistent across all fetch calls in `App.jsx` — contracts, portfolio, trends, add/remove portfolio items, and sell actions.
+
+## Server-Side Token Verification
+
+Protected routes declare the `get_current_user` FastAPI dependency. The dependency extracts the token from the `Authorization` header and verifies it with Supabase:
+
+```python
+# server/auth.py
+from fastapi import HTTPException, Header
+from typing import Optional
+from database import get_supabase
+
+def get_current_user(authorization: Optional[str] = Header(None)):
+    supabase = get_supabase()
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401,
+                            detail="Invalid or missing authorization header")
+
+    token = authorization.split(" ")[1]
+    try:
+        user = supabase.auth.get_user(token)   # validates token with Supabase
+        if not user or not user.user:
+            raise HTTPException(status_code=401, detail="Invalid session")
+        return user.user
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=str(e))
+```
+
+Routers inject this dependency to get the verified user object:
+
+```python
+from auth import get_current_user
+from fastapi import Depends
+
+@router.get("/portfolio")
+def get_portfolio(current_user = Depends(get_current_user)):
+    ...
+```
+
+<Note>
+  Token verification happens entirely within Supabase — FastAPI does not maintain a local session store or cache. Every request performs a live `get_user` check.
+</Note>
+
+## Token Storage on the Client
+
+The Zustand `persist` middleware serialises the entire store to `localStorage`:
+
+```js
+export const useEnergyStore = create(
+  persist(
+    (set) => ({ ... }),
+    { name: "energy-storage" },  // localStorage key
+  ),
+);
+```
+
+This means the `token` (and `user`) survive full page reloads. On startup, Zustand rehydrates from `localStorage` before the first render, so users are not asked to log in again unless the token has expired or they explicitly log out.
+
+## Logout
+
+Logging out clears both `user` and `token` from the Zustand store in one action:
+
+```js
+// src/store.js
+logout: () => set({ user: null, token: null }),
+```
+
+Because `persist` immediately syncs mutations to `localStorage`, the cleared values are written back at once. The `Sidebar` calls `logout()` when the user clicks the sign-out button; `App` detects `user === null` and re-renders the `Login` screen.
+
+## Automatic 401 Handling
+
+All `fetch` calls pass through the shared `handleResponse` helper in `App.jsx`. If the server returns a `401` (e.g. because the token has expired), the helper calls `logout()` automatically, redirecting the user back to the login screen without any user-visible error:
+
+```jsx
+// App.jsx
+const handleResponse = (res) => {
+  if (res.status === 401) {
+    logout();   // clears store + localStorage, shows Login
+    return null;
+  }
+  return res.json();
+};
+```
+
+Mutation calls (`addToPortfolio`, `removeFromPortfolio`, `markContractAsSold`) also check for `401` inline and call `logout()` directly:
+
+```jsx
+fetch(`/api/portfolio/${contractId}`, {
+  method: "POST",
+  headers: { Authorization: `Bearer ${token}` },
+}).then((res) => {
+  if (res.status === 401) logout();
+  else fetchPortfolio();
+});
+```
+
+## Authentication Summary
+
+```
+Client                        Server                    Supabase
+──────                        ──────                    ────────
+POST /api/login ──────────►  sign_in_with_password ──► Issues JWT
+                ◄──────────  { access_token, user } ◄──
+Store token in Zustand
+ + localStorage
+
+GET /api/contracts ────────► get_current_user dep  ──► get_user(token)
+Authorization: Bearer <jwt>  (validates token)      ◄── user object
+                ◄───────────  contract data
+
+On logout ─────────────────► user=null, token=null
+                              (clears localStorage)
+```

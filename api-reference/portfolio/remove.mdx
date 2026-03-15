@@ -1,0 +1,40 @@
+---
+title: Remove from portfolio
+description: Remove an energy contract from the authenticated user's portfolio.
+---
+
+<Note>
+Requires `Authorization: Bearer <token>` header. The portfolio is scoped to the authenticated user.
+</Note>
+
+## Request
+
+**`DELETE /api/portfolio/{contract_id}`**
+
+### Path parameters
+
+<ParamField path="contract_id" type="string" required>
+  UUID of the contract to remove from the portfolio.
+</ParamField>
+
+## Response
+
+<ResponseField name="message" type="string" required>
+  Confirmation message. Always returns `"Removed from portfolio"`.
+</ResponseField>
+
+## Example
+
+```bash cURL
+curl --request DELETE \
+  --url http://localhost:8000/api/portfolio/c1d2e3f4-0000-1111-2222-333344445555 \
+  --header 'Authorization: Bearer <token>'
+```
+
+### Example response
+
+```json
+{
+  "message": "Removed from portfolio"
+}
+```
