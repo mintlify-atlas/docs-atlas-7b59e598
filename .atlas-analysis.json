@@ -1,0 +1,90 @@
+{
+  "projectType": "saas",
+  "projectName": "Energy Contracts Dashboard",
+  "projectDescription": "A full-stack energy trading platform where users can browse, filter, and manage energy contracts across solar, wind, nuclear, and other energy types, with portfolio tracking and price trend analytics.",
+  "theme": "linden",
+  "primaryColor": "#16a34a",
+  "lightColor": "#bbf7d0",
+  "darkColor": "#14532d",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "quickstart"]
+          },
+          {
+            "group": "Setup",
+            "pages": ["setup/prerequisites", "setup/database", "setup/environment"]
+          },
+          {
+            "group": "Core Features",
+            "pages": ["features/marketplace", "features/portfolio", "features/price-trends", "features/contract-comparison"]
+          },
+          {
+            "group": "Architecture",
+            "pages": ["architecture/overview", "architecture/frontend", "architecture/backend", "architecture/authentication"]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["api-reference/introduction"]
+          },
+          {
+            "group": "Authentication",
+            "pages": ["api-reference/auth/login"]
+          },
+          {
+            "group": "Contracts",
+            "pages": [
+              "api-reference/contracts/list",
+              "api-reference/contracts/get",
+              "api-reference/contracts/create",
+              "api-reference/contracts/update",
+              "api-reference/contracts/delete",
+              "api-reference/contracts/sell",
+              "api-reference/contracts/trends"
+            ]
+          },
+          {
+            "group": "Portfolio",
+            "pages": [
+              "api-reference/portfolio/get",
+              "api-reference/portfolio/add",
+              "api-reference/portfolio/remove"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Energy contract marketplace with advanced filtering by energy type, price, quantity, location, and date range",
+    "Personal portfolio management with metrics (total capacity, total cost, average price per MWh)",
+    "Interactive price trend charts showing average prices by energy type over time",
+    "Side-by-side contract comparison (up to 3 contracts at once)",
+    "Supabase-backed authentication with JWT token management",
+    "Dark/light theme toggle with persistent state via Zustand",
+    "Full CRUD operations for energy contracts via REST API",
+    "Automatic OpenAPI documentation via FastAPI at /docs"
+  ],
+  "publicApiSurface": [
+    "POST /api/login",
+    "GET /api/contracts",
+    "GET /api/contracts/{contract_id}",
+    "POST /api/contracts",
+    "PUT /api/contracts/{contract_id}",
+    "DELETE /api/contracts/{contract_id}",
+    "POST /api/contracts/{contract_id}/sell",
+    "GET /api/contracts/trends",
+    "GET /api/portfolio",
+    "POST /api/portfolio/{contract_id}",
+    "DELETE /api/portfolio/{contract_id}"
+  ]
+}
